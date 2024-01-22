@@ -26,6 +26,7 @@ pydantic==2.5.3
 pydantic-extra-types==2.4.1
 pydantic-settings==2.1.0
 pydantic_core==2.14.6
+pymongo==4.6.1
 python-dotenv==1.0.0
 python-jose==3.3.0
 python-multipart==0.0.6
