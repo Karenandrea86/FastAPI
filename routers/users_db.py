@@ -21,7 +21,7 @@ async def user(id: str):
 
 # Query    
 @router.get("/")
-async def user(id: str):
+async def user():
     return search_user("_id", ObjectId(id))
 
 # Agregar usuario
@@ -40,18 +40,30 @@ async def user(user: User):
     return User(**new_user)
         
 # Actualizar usuario
-@router.put("/", response_model=User)
-async def user(user: User):
-    
-    user_dict = dict(user)
-    del user_dict["id"]
-    
+@router.put("/{id}", response_model=User)
+async def update_user(id: str, updated_user: User):
     try:
-        db_client.users.find_one_and_replace({"_id": ObjectId(user.id)}, user_dict)
+        user_id = ObjectId(id)
+
+        existing_user = db_client.users.find_one({"_id": user_id})
+        if not existing_user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+
+        updated_user_dict = dict(updated_user)
+        if "id" in updated_user_dict:
+            del updated_user_dict["id"]
+
+        db_client.users.find_one_and_update(
+            {"_id": user_id},
+            {"$set": updated_user_dict},
+            return_document=True
+        )
+
+        updated_user_data = db_client.users.find_one({"_id": user_id})
+        return User(**user_schema(updated_user_data))
+        
     except:
-        return{"error": "No se ha actualizado el usuario"}
-    
-    return search_user("_id", ObjectId(user.id))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al actualizar el usuario")
 
 # Eliminar usuario
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
